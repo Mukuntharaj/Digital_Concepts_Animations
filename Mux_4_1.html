@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4:1 Multiplexer Animation</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            max-width: 1000px;
+            width: 75%;
+        }
+
+        .title {
+            text-align: center;
+            color: white;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .mux-container {
+            position: relative;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 30px;
+            padding: 40px 40px 80px 40px;
+            margin: 20px 20px;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-section {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            margin-right: 40px;
+        }
+
+        .input-line {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-label {
+            font-weight: bold;
+            color: #333;
+            min-width: 40px;
+        }
+
+        .input-toggle {
+            width: 60px;
+            height: 30px;
+            background: #ddd;
+            border-radius: 15px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid #ccc;
+        }
+
+        .input-toggle.active {
+            background: #4CAF50;
+            border-color: #45a049;
+            box-shadow: 0 0 15px rgba(76, 175, 80, 0.6);
+        }
+
+        .input-toggle::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .input-toggle.active::after {
+            transform: translateX(30px);
+        }
+
+        .wire {
+            height: 4px;
+            background: #666;
+            border-radius: 2px;
+            transition: all 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .wire.active {
+            background: #4CAF50;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.8);
+        }
+
+        .wire.selected {
+            background: #FF6B6B;
+            box-shadow: 0 0 15px rgba(255, 107, 107, 0.8);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .signal {
+            position: absolute;
+            width: 40px;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, #FFE066, transparent);
+            border-radius: 2px;
+            opacity: 0;
+            animation: signal-flow 2s infinite linear;
+        }
+
+        @keyframes signal-flow {
+            0% { left: -20px; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { left: 100%; opacity: 0; }
+        }
+
+        .mux-chip {
+            position: absolute;
+            right:500px;
+            top: 45%;
+            transform: translateY(-50%);
+            width: 120px;
+            height: 250px;
+            background: #2C3E50;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            border: 2px solid #34495e;
+        }
+
+        .mux-label {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .select-inputs-bottom {
+            position: absolute;
+            bottom: -15px;
+            right: 500px;
+            width: 120px;
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .select-line {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .select-wire {
+            width: 4px;
+            height: 50px;
+            background: #666;
+            border-radius: 2px;
+            transition: all 0.5s ease;
+        }
+
+        .select-bit.active + .select-wire {
+            background: #E74C3C;
+            box-shadow: 0 0 10px rgba(231, 76, 60, 0.6);
+        }
+
+        .select-bit {
+            width: 40px;
+            height: 20px;
+            background: #34495e;
+            border: 2px solid #4a6741;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .select-bit.active {
+            background: #E74C3C;
+            border-color: #c0392b;
+            box-shadow: 0 0 10px rgba(231, 76, 60, 0.6);
+        }
+
+        .output-section {
+            position: absolute;
+            right: 250px;
+            top: 50%;
+            transform: translateY(-70%);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .output-wire {
+            width: 200px;
+            height: 6px;
+            background: #666;
+            border-radius: 3px;
+            transition: all 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .output-wire.active {
+            background: #FF6B6B;
+            box-shadow: 0 0 15px rgba(255, 107, 107, 0.8);
+        }
+
+        .output-label {
+            font-weight: bold;
+            color: #333;
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            border: 2px solid #ddd;
+            transition: all 0.3s ease;
+        }
+
+        .output-label.active {
+            background: #FF6B6B;
+            color: white;
+            border-color: #E74C3C;
+            box-shadow: 0 0 15px rgba(255, 107, 107, 0.6);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .info-panel {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            color: #333;
+            text-align: center;
+        }
+
+        .truth-table {
+            margin: 20px auto;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .truth-table th, .truth-table td {
+            padding: 12px 15px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .truth-table th {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+
+        .truth-table tr.highlight {
+            background: #FFE066;
+            animation: highlight-row 1s ease-in-out;
+        }
+
+        @keyframes highlight-row {
+            0%, 100% { background: #FFE066; }
+            50% { background: #FFF3A0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">4:1 Multiplexer Animation</h1>
+        
+        <div class="mux-container">
+            <!-- Input Section -->
+            <div class="input-section">
+                <div class="input-line">
+                    <span class="input-label">I0:</span>
+                    <div class="input-toggle" data-input="0"></div>
+                    <div class="wire" id="wire0" style="width: 260px;">
+                        <div class="signal"></div>
+                    </div>
+                </div>
+                
+                <div class="input-line">
+                    <span class="input-label">I1:</span>
+                    <div class="input-toggle" data-input="1"></div>
+                    <div class="wire" id="wire1" style="width: 260px;">
+                        <div class="signal"></div>
+                    </div>
+                </div>
+                
+                <div class="input-line">
+                    <span class="input-label">I2:</span>
+                    <div class="input-toggle" data-input="2"></div>
+                    <div class="wire" id="wire2" style="width: 260px;">
+                        <div class="signal"></div>
+                    </div>
+                </div>
+                
+                <div class="input-line">
+                    <span class="input-label">I3:</span>
+                    <div class="input-toggle" data-input="3"></div>
+                    <div class="wire" id="wire3" style="width: 260px;">
+                        <div class="signal"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MUX Chip -->
+            <div class="mux-chip">
+                <div class="mux-label">4:1 MUX</div>
+                <div style="font-size: 0.8em; opacity: 0.8;">Select: <span id="select-value">00</span></div>
+            </div>
+
+            <!-- Select inputs at bottom -->
+            <div class="select-inputs-bottom">
+                <div class="select-line">
+                    <div class="select-bit" data-select="1" id="s1">S1</div>
+                    <div class="select-wire"></div>
+                </div>
+                <div class="select-line">
+                    <div class="select-bit" data-select="0" id="s0">S0</div>
+                    <div class="select-wire"></div>
+                </div>
+            </div>
+
+            <!-- Output Section -->
+            <div class="output-section">
+                <div class="output-wire" id="output-wire">
+                    <div class="signal"></div>
+                </div>
+                <div class="output-label" id="output-label">Y</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="control-btn" onclick="toggleInput(0)">Toggle I0</button>
+            <button class="control-btn" onclick="toggleInput(1)">Toggle I1</button>
+            <button class="control-btn" onclick="toggleInput(2)">Toggle I2</button>
+            <button class="control-btn" onclick="toggleInput(3)">Toggle I3</button>
+            <button class="control-btn" onclick="nextSelect()">Next Select</button>
+            <button class="control-btn" onclick="autoDemo()">Auto Demo</button>
+        </div>
+
+        <div class="info-panel">
+            <h3>Truth Table</h3>
+            <table class="truth-table">
+                <thead>
+                    <tr>
+                        <th>S1</th>
+                        <th>S0</th>
+                        <th>Selected Input</th>
+                        <th>Output (Y)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr id="row-0">
+                        <td>0</td>
+                        <td>0</td>
+                        <td>I0</td>
+                        <td id="out-0">0</td>
+                    </tr>
+                    <tr id="row-1">
+                        <td>0</td>
+                        <td>1</td>
+                        <td>I1</td>
+                        <td id="out-1">0</td>
+                    </tr>
+                    <tr id="row-2">
+                        <td>1</td>
+                        <td>0</td>
+                        <td>I2</td>
+                        <td id="out-2">0</td>
+                    </tr>
+                    <tr id="row-3">
+                        <td>1</td>
+                        <td>1</td>
+                        <td>I3</td>
+                        <td id="out-3">0</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p><strong>Current Selection:</strong> <span id="current-info">I0 is selected (S1=0, S0=0)</span></p>
+        </div>
+    </div>
+
+    <script>
+        let inputs = [false, false, false, false];
+        let selectBits = [false, false]; // [S1, S0]
+        let isAutoDemo = false;
+
+        function updateDisplay() {
+            // Update input toggles and wires
+            inputs.forEach((state, index) => {
+                const toggle = document.querySelector(`[data-input="${index}"]`);
+                const wire = document.getElementById(`wire${index}`);
+                
+                toggle.classList.toggle('active', state);
+                wire.classList.toggle('active', state);
+            });
+
+            // Update select bits
+            selectBits.forEach((state, index) => {
+                const bit = document.getElementById(index === 0 ? 's0' : 's1');
+                bit.classList.toggle('active', state);
+            });
+
+            // Calculate selected input (S1 is MSB, S0 is LSB)
+            const selectedInput = selectBits[1] * 2 + selectBits[0];
+            const selectedInputState = inputs[selectedInput];
+
+            // Update select value display (S1 S0)
+            document.getElementById('select-value').textContent = 
+                selectBits[1] + '' + selectBits[0];
+
+            // Highlight selected wire
+            for (let i = 0; i < 4; i++) {
+                const wire = document.getElementById(`wire${i}`);
+                wire.classList.toggle('selected', i === selectedInput);
+            }
+
+            // Update output
+            const outputWire = document.getElementById('output-wire');
+            const outputLabel = document.getElementById('output-label');
+            
+            outputWire.classList.toggle('active', selectedInputState);
+            outputLabel.classList.toggle('active', selectedInputState);
+
+            // Update truth table
+            for (let i = 0; i < 4; i++) {
+                const row = document.getElementById(`row-${i}`);
+                const output = document.getElementById(`out-${i}`);
+                
+                row.classList.toggle('highlight', i === selectedInput);
+                output.textContent = i === selectedInput ? (selectedInputState ? '1' : '0') : '-';
+            }
+
+            // Update current info
+            const currentInfo = document.getElementById('current-info');
+            currentInfo.textContent = 
+                `I${selectedInput} is selected (S1=${selectBits[1] ? 1 : 0}, S0=${selectBits[0] ? 1 : 0}) → Output: ${selectedInputState ? '1' : '0'}`;
+        }
+
+        function toggleInput(index) {
+            inputs[index] = !inputs[index];
+            updateDisplay();
+        }
+
+        function nextSelect() {
+            // Convert to decimal, increment, and wrap around (S1 is MSB, S0 is LSB)
+            let selectValue = selectBits[1] * 2 + selectBits[0];
+            selectValue = (selectValue + 1) % 4;
+            
+            selectBits[1] = selectValue >= 2;  // S1 (MSB)
+            selectBits[0] = selectValue % 2 === 1;  // S0 (LSB)
+            
+            updateDisplay();
+        }
+
+        function autoDemo() {
+            if (isAutoDemo) {
+                isAutoDemo = false;
+                return;
+            }
+            
+            isAutoDemo = true;
+            let step = 0;
+            
+            const demoSteps = [
+                () => { inputs = [true, false, false, false]; selectBits = [false, false]; },  // S1=0, S0=0 → I0
+                () => { selectBits = [true, false]; },   // S1=0, S0=1 → I1
+                () => { inputs[1] = true; },
+                () => { selectBits = [false, true]; },   // S1=1, S0=0 → I2
+                () => { inputs[2] = true; },
+                () => { selectBits = [true, true]; },    // S1=1, S0=1 → I3
+                () => { inputs[3] = true; },
+                () => { selectBits = [false, false]; },  // Back to S1=0, S0=0 → I0
+            ];
+            
+            const runDemo = () => {
+                if (!isAutoDemo || step >= demoSteps.length) {
+                    isAutoDemo = false;
+                    return;
+                }
+                
+                demoSteps[step]();
+                updateDisplay();
+                step++;
+                
+                setTimeout(runDemo, 1500);
+            };
+            
+            runDemo();
+        }
+
+        // Initialize event listeners
+        document.querySelectorAll('.input-toggle').forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                const input = parseInt(toggle.dataset.input);
+                toggleInput(input);
+            });
+        });
+
+        document.querySelectorAll('.select-bit').forEach(bit => {
+            bit.addEventListener('click', () => {
+                const selectIndex = parseInt(bit.dataset.select);
+                selectBits[selectIndex] = !selectBits[selectIndex];
+                updateDisplay();
+            });
+        });
+
+        // Initial display update
+        updateDisplay();
+    </script>
+</body>
+</html>
