@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T Flip-Flop</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-group label {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .clock-btn {
+            background: linear-gradient(45deg, #ff9a9e, #fecfef);
+            color: #333;
+        }
+
+        .clock-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 154, 158, 0.4);
+        }
+
+        .clock-btn.active {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a6f);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .toggle-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .toggle-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .reset-btn {
+            background: linear-gradient(45deg, #f093fb, #f5576c);
+            color: white;
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(240, 147, 251, 0.4);
+        }
+
+        .auto-btn {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            color: white;
+        }
+
+        .auto-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+        }
+
+        .auto-btn.active {
+            background: linear-gradient(45deg, #43e97b, #38f9d7);
+        }
+
+        .circuit-container {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .flipflop {
+            background: rgba(255, 255, 255, 0.15);
+            border: 3px solid #4ecdc4;
+            border-radius: 15px;
+            padding: 30px;
+            min-width: 300px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .flipflop h3 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #4ecdc4;
+        }
+
+        .ff-body {
+            position: relative;
+            width: 200px;
+            height: 120px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: 2px solid #fff;
+            border-radius: 10px;
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .ff-label {
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .input, .output {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .input {
+            background: #ff6b6b;
+            left: -15px;
+        }
+
+        .output {
+            background: #4ecdc4;
+            right: -15px;
+        }
+
+        .input.high, .output.high {
+            background: #43e97b;
+            box-shadow: 0 0 20px rgba(67, 233, 123, 0.6);
+            transform: scale(1.1);
+        }
+
+        .input.low, .output.low {
+            background: #ff6b6b;
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.4);
+        }
+
+        .t-input {
+            top: 20px;
+        }
+
+        .clk-input {
+            top: 60px;
+        }
+
+        .q-output {
+            top: 30px;
+        }
+
+        .qbar-output {
+            top: 70px;
+        }
+
+        .label {
+            position: absolute;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .t-label {
+            top: 10px;
+            left: -10px;
+        }
+
+        .clk-label {
+            top: 10px;
+            left: -25px;
+        }
+
+        .q-label {
+            top: 10px;
+            right: -15px;
+        }
+
+        .qbar-label {
+            top: 5px;
+            right: -15px;
+        }
+
+        .timing-diagram {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+            backdrop-filter: blur(5px);
+        }
+
+        .timing-diagram h3 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #4ecdc4;
+        }
+
+        .signal-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            gap: 15px;
+        }
+
+        .signal-label {
+            width: 60px;
+            font-weight: bold;
+            text-align: right;
+        }
+
+        .signal-trace {
+            flex: 1;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .trace-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: #43e97b;
+            transition: none;
+            border-radius: 2px;
+        }
+
+        .digital-trace {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .trace-segment {
+            position: absolute;
+            height: 100%;
+            transition: none;
+        }
+
+        .trace-high {
+            background: #43e97b;
+            top: 0;
+            height: 50%;
+        }
+
+        .trace-low {
+            background: #ff6b6b;
+            top: 50%;
+            height: 50%;
+        }
+
+        .clock-trace {
+            background: rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .clock-signal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background: repeating-linear-gradient(
+                to right,
+                #43e97b 0%,
+                #43e97b 50%,
+                rgba(0, 0, 0, 0.3) 50%,
+                rgba(0, 0, 0, 0.3) 100%
+            );
+            background-size: 40px 100%;
+            animation: clockMove 2s infinite linear;
+        }
+
+        .clock-trace.running .clock-signal {
+            animation: clockMove 1s infinite linear;
+        }
+
+        @keyframes clockMove {
+            0% { background-position: 0px; }
+            100% { background-position: 40px; }
+        }
+
+        .frequency-display {
+            background: rgba(78, 205, 196, 0.2);
+            border: 2px solid #4ecdc4;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .frequency-display h4 {
+            color: #4ecdc4;
+            margin-bottom: 10px;
+        }
+
+        .freq-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #43e97b;
+        }
+
+        .truth-table {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .truth-table h3 {
+            text-align: center;
+            margin-bottom: 15px;
+            color: #4ecdc4;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        th {
+            background: rgba(78, 205, 196, 0.3);
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .current-state {
+            background: rgba(67, 233, 123, 0.3) !important;
+            animation: highlight 1s ease-in-out;
+        }
+
+        @keyframes highlight {
+            0% { background: rgba(67, 233, 123, 0.6) !important; }
+            100% { background: rgba(67, 233, 123, 0.3) !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 T Flip-Flop</h1>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>Manual Clock</label>
+                <button class="clock-btn" onclick="manualClock()">Clock Pulse</button>
+            </div>
+            <div class="control-group">
+                <label>1Hz Clock</label>
+                <button class="auto-btn" onclick="toggle1HzClock()">Start 1Hz</button>
+            </div>
+            <div class="control-group">
+                <label>T Input</label>
+                <button class="toggle-btn" onclick="toggleT()">Toggle T</button>
+            </div>
+            <div class="control-group">
+                <label>Reset</label>
+                <button class="reset-btn" onclick="reset()">Reset</button>
+            </div>
+        </div>
+
+        <div class="frequency-display">
+            <h4>Clock Frequency</h4>
+            <div class="freq-value" id="freqDisplay">0 Hz</div>
+        </div>
+
+        <div class="circuit-container">
+            <div class="flipflop">
+                <h3>T Flip-Flop Circuit</h3>
+                <div class="ff-body">
+                    <div class="ff-label">T FF</div>
+                    
+                    <div class="input t-input" id="tInput">
+                        <span id="tValue">0</span>
+                        <div class="label t-label">T</div>
+                    </div>
+                    
+                    <div class="input clk-input" id="clkInput">
+                        <span id="clkValue">0</span>
+                        <div class="label clk-label">CLK</div>
+                    </div>
+                    
+                    <div class="output q-output" id="qOutput">
+                        <span id="qValue">0</span>
+                        <div class="label q-label">Q</div>
+                    </div>
+                    
+                    <div class="output qbar-output" id="qbarOutput">
+                        <span id="qbarValue">1</span>
+                        <div class="label qbar-label">Q̄</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="timing-diagram">
+            <h3>📊 Timing Diagram</h3>
+            <div class="signal-row">
+                <div class="signal-label">CLK:</div>
+                <div class="signal-trace">
+                    <div class="trace-line clock-trace" id="clockTrace">
+                        <div class="clock-signal"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="signal-row">
+                <div class="signal-label">T:</div>
+                <div class="signal-trace">
+                    <div class="digital-trace" id="tTrace"></div>
+                </div>
+            </div>
+            <div class="signal-row">
+                <div class="signal-label">Q:</div>
+                <div class="signal-trace">
+                    <div class="digital-trace" id="qTrace"></div>
+                </div>
+            </div>
+            <div class="signal-row">
+                <div class="signal-label">Q̄:</div>
+                <div class="signal-trace">
+                    <div class="digital-trace" id="qbarTrace"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="truth-table">
+            <h3>📋 Truth Table</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>T</th>
+                        <th>CLK</th>
+                        <th>Q(n+1)</th>
+                        <th>Operation</th>
+                    </tr>
+                </thead>
+                <tbody id="truthTableBody">
+                    <tr id="row-0-0">
+                        <td>0</td>
+                        <td>↑</td>
+                        <td>Q(n)</td>
+                        <td>No Change</td>
+                    </tr>
+                    <tr id="row-1-0">
+                        <td>1</td>
+                        <td>↑</td>
+                        <td>Q̄(n)</td>
+                        <td>Toggle</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let tInput = false;
+        let clockState = false;
+        let qOutput = false;
+        let qbarOutput = true;
+        let clock1Hz = false;
+        let clock1HzInterval;
+        let clockPulseCount = 0;
+        let traceHistory = [];
+        const maxTracePoints = 20;
+        const traceWidth = 100; // Full width for timing diagram
+
+        function addTracePoint() {
+            const timePoint = {
+                time: clockPulseCount,
+                t: tInput,
+                q: qOutput,
+                qbar: qbarOutput,
+                clock: clockState
+            };
+            
+            traceHistory.push(timePoint);
+            
+            // Keep only the last maxTracePoints
+            if (traceHistory.length > maxTracePoints) {
+                traceHistory.shift();
+            }
+            
+            drawTimingTraces();
+        }
+
+        function drawTimingTraces() {
+            drawDigitalTrace('tTrace', traceHistory.map(p => p.t));
+            drawDigitalTrace('qTrace', traceHistory.map(p => p.q));
+            drawDigitalTrace('qbarTrace', traceHistory.map(p => p.qbar));
+        }
+
+        function drawDigitalTrace(elementId, values) {
+            const trace = document.getElementById(elementId);
+            trace.innerHTML = '';
+            
+            if (values.length === 0) return;
+            
+            const segmentWidth = 100 / Math.max(values.length - 1, 1);
+            
+            for (let i = 0; i < values.length; i++) {
+                const segment = document.createElement('div');
+                segment.className = values[i] ? 'trace-segment trace-high' : 'trace-segment trace-low';
+                segment.style.left = (i * segmentWidth) + '%';
+                segment.style.width = segmentWidth + '%';
+                
+                // Add vertical transition lines
+                if (i > 0 && values[i] !== values[i-1]) {
+                    const transition = document.createElement('div');
+                    transition.style.position = 'absolute';
+                    transition.style.left = (i * segmentWidth) + '%';
+                    transition.style.top = '0';
+                    transition.style.width = '2px';
+                    transition.style.height = '100%';
+                    transition.style.background = '#ffffff';
+                    transition.style.zIndex = '10';
+                    trace.appendChild(transition);
+                }
+                
+                trace.appendChild(segment);
+            }
+        }
+
+        function updateDisplay() {
+            // Update input displays
+            document.getElementById('tValue').textContent = tInput ? '1' : '0';
+            document.getElementById('tInput').className = tInput ? 'input t-input high' : 'input t-input low';
+            
+            document.getElementById('clkValue').textContent = clockState ? '1' : '0';
+            document.getElementById('clkInput').className = clockState ? 'input clk-input high' : 'input clk-input low';
+            
+            // Update output displays
+            document.getElementById('qValue').textContent = qOutput ? '1' : '0';
+            document.getElementById('qOutput').className = qOutput ? 'output q-output high' : 'output q-output low';
+            
+            document.getElementById('qbarValue').textContent = qbarOutput ? '1' : '0';
+            document.getElementById('qbarOutput').className = qbarOutput ? 'output qbar-output high' : 'output qbar-output low';
+            
+            // Highlight current state in truth table
+            highlightTruthTable();
+            
+            // Update frequency display
+            updateFrequencyDisplay();
+        }
+
+        function updateFrequencyDisplay() {
+            const freqDisplay = document.getElementById('freqDisplay');
+            if (clock1Hz) {
+                freqDisplay.textContent = '1.00 Hz';
+                freqDisplay.style.color = '#43e97b';
+            } else {
+                freqDisplay.textContent = '0 Hz';
+                freqDisplay.style.color = '#ff6b6b';
+            }
+        }
+
+        function highlightTruthTable() {
+            // Remove previous highlights
+            document.querySelectorAll('tr').forEach(row => row.classList.remove('current-state'));
+            
+            // Highlight current state
+            if (tInput) {
+                document.getElementById('row-1-0').classList.add('current-state');
+            } else {
+                document.getElementById('row-0-0').classList.add('current-state');
+            }
+        }
+
+        function executeClockEdge() {
+            // Rising edge
+            clockState = true;
+            
+            // T Flip-flop logic: toggle on rising edge when T=1
+            if (tInput) {
+                qOutput = !qOutput;
+                qbarOutput = !qOutput;
+            }
+            
+            clockPulseCount++;
+            addTracePoint(); // Record the state change
+            updateDisplay();
+            
+            // Falling edge after short delay
+            setTimeout(() => {
+                clockState = false;
+                updateDisplay();
+            }, 200);
+        }
+
+        function manualClock() {
+            if (!clock1Hz) {
+                executeClockEdge();
+                document.querySelector('.clock-btn').classList.add('active');
+                setTimeout(() => {
+                    document.querySelector('.clock-btn').classList.remove('active');
+                }, 200);
+            }
+        }
+
+        function toggle1HzClock() {
+            clock1Hz = !clock1Hz;
+            const btn = document.querySelector('.auto-btn');
+            const clockTrace = document.getElementById('clockTrace');
+            
+            if (clock1Hz) {
+                btn.textContent = 'Stop 1Hz';
+                btn.classList.add('active');
+                clockTrace.classList.add('running');
+                
+                // Start 1Hz clock (1000ms period = 1 Hz)
+                clock1HzInterval = setInterval(() => {
+                    executeClockEdge();
+                }, 1000);
+            } else {
+                btn.textContent = 'Start 1Hz';
+                btn.classList.remove('active');
+                clockTrace.classList.remove('running');
+                clearInterval(clock1HzInterval);
+            }
+            
+            updateDisplay();
+        }
+
+        function toggleT() {
+            tInput = !tInput;
+            // Update trace immediately when T changes
+            if (traceHistory.length > 0) {
+                addTracePoint();
+            }
+            updateDisplay();
+        }
+
+        function reset() {
+            // Stop 1Hz clock if running
+            if (clock1Hz) {
+                toggle1HzClock();
+            }
+            
+            tInput = false;
+            clockState = false;
+            qOutput = false;
+            qbarOutput = true;
+            clockPulseCount = 0;
+            traceHistory = [];
+            
+            // Add initial state to trace
+            addTracePoint();
+            updateDisplay();
+        }
+
+        // Initialize display
+        reset(); // This will set initial state and draw initial trace
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            switch(e.key.toLowerCase()) {
+                case 'c':
+                    manualClock();
+                    break;
+                case '1':
+                    toggle1HzClock();
+                    break;
+                case 't':
+                    toggleT();
+                    break;
+                case 'r':
+                    reset();
+                    break;
+            }
+        });
+    </script>
+</body>
+</html>
