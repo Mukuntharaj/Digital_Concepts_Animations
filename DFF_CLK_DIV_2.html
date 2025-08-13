@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>D Flip-Flop Clock Divider – With Pause/Resume & Frequency</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f8f8f8;
+      text-align: center;
+      padding: 20px;
+    }
+    canvas, svg {
+      background: white;
+      border: 1px solid #ccc;
+      margin-top: 20px;
+    }
+    select, button {
+      margin-top: 10px;
+      font-size: 16px;
+      padding: 4px 10px;
+    }
+    .tooltip {
+      position: absolute;
+      background: #fff;
+      border: 1px solid #888;
+      padding: 2px 6px;
+      font-size: 12px;
+      border-radius: 3px;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    #frequencyDisplay {
+      margin-top: 10px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h2>D Flip-Flop Clock Divider</h2>
+
+  <label>Select Frequency: </label>
+  <select id="freqSelect">
+    <option value="1000">Slow</option>
+    <option value="500" selected>Medium</option>
+    <option value="200">Fast</option>
+  </select>
+
+  <button id="pauseBtn">Pause</button>
+
+  <div id="frequencyDisplay">
+    Input Clock Frequency: <span id="clockFreq">--</span> Hz |
+    Q Output Frequency: <span id="qFreq">--</span> Hz
+  </div>
+
+  <div style="position: relative; display: inline-block;">
+    <canvas id="waveCanvas" width="800" height="300"></canvas>
+    <div id="clockTip" class="tooltip" style="display:none;"></div>
+    <div id="qTip" class="tooltip" style="display:none;"></div>
+  </div>
+
+  <svg id="circuit" width="800" height="300">
+    <rect x="300" y="100" width="120" height="100" fill="#e0f7fa" stroke="black"/>
+    <text x="325" y="125" font-size="14">D Flip-Flop</text>
+
+    <line id="clkLine" x1="270" y1="190" x2="300" y2="190" stroke="black" stroke-width="2"/>
+    <polygon points="270,185 270,195 260,190" fill="black"/>
+    <text x="220" y="195" font-size="12">Clock</text>
+
+    <line id="dLine" x1="270" y1="140" x2="300" y2="140" stroke="black" stroke-width="2"/>
+    <text x="240" y="143" font-size="12">D</text>
+
+    <line id="qLine" x1="420" y1="140" x2="450" y2="140" stroke="black" stroke-width="2"/>
+    <text x="455" y="143" font-size="12">Q</text>
+
+    <polygon points="480,130 500,140 480,150" fill="none" stroke="black"/>
+    <circle cx="505" cy="140" r="3" stroke="black" fill="none"/>
+    <text x="485" y="125" font-size="12">NOT</text>
+
+    <line id="qToNot" x1="450" y1="140" x2="480" y2="140" stroke="black"/>
+    <line id="feedbackV1" x1="508" y1="140" x2="508" y2="60" stroke="black" stroke-dasharray="6" stroke-width="2"/>
+    <line id="feedbackH" x1="508" y1="60" x2="270" y2="60" stroke="black" stroke-dasharray="6" stroke-width="2"/>
+    <line id="feedbackV2" x1="270" y1="60" x2="270" y2="140" stroke="black" stroke-dasharray="6" stroke-width="2"/>
+    <text x="520" y="55" font-size="12">Feedback: Q → NOT → D</text>
+
+    <text id="dLabel" x="280" y="130" font-size="12">D = 0</text>
+    <text id="qLabel" x="430" y="130" font-size="12">Q = 0</text>
+  </svg>
+
+  <script>
+    const freqSelect = document.getElementById("freqSelect");
+    const pauseBtn = document.getElementById("pauseBtn");
+    const canvas = document.getElementById("waveCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const clkLine = document.getElementById("clkLine");
+    const qLine = document.getElementById("qLine");
+    const dLine = document.getElementById("dLine");
+    const dLabel = document.getElementById("dLabel");
+    const qLabel = document.getElementById("qLabel");
+    const clockTip = document.getElementById("clockTip");
+    const qTip = document.getElementById("qTip");
+    const clockFreqEl = document.getElementById("clockFreq");
+    const qFreqEl = document.getElementById("qFreq");
+
+    let interval = parseInt(freqSelect.value);
+    let clock = 0;
+    let q = 0;
+    let d = 1;
+    let prevClock = 0;
+    let running = true;
+    const maxPoints = 40;
+    const clockPoints = [];
+    const qPoints = [];
+    let dashOffset = 0;
+
+    // Frequency tracking
+    let clockEdges = 0;
+    let qEdges = 0;
+    let lastClock = 0;
+    let lastQ = 0;
+
+    function updateLogic() {
+      clock = 1 - clock;
+
+      if (prevClock === 0 && clock === 1) {
+        q = d;
+        d = 1 - q;
+      }
+      prevClock = clock;
+
+      if (clock !== lastClock) clockEdges++;
+      if (q !== lastQ) qEdges++;
+      lastClock = clock;
+      lastQ = q;
+
+      clockPoints.push(clock);
+      qPoints.push(q);
+      if (clockPoints.length > maxPoints) {
+        clockPoints.shift();
+        qPoints.shift();
+      }
+
+      clkLine.setAttribute("stroke", clock ? "#2196f3" : "#555");
+      qLine.setAttribute("stroke", q ? "#f44336" : "#555");
+      dLine.setAttribute("stroke", d ? "#4caf50" : "#555");
+
+      dLabel.textContent = `D = ${d}`;
+      qLabel.textContent = `Q = ${q}`;
+
+      dashOffset = (dashOffset + 1) % 12;
+      ["feedbackV1", "feedbackH", "feedbackV2"].forEach(id =>
+        document.getElementById(id).setAttribute("stroke-dashoffset", dashOffset)
+      );
+    }
+
+    function showTooltip(tip, text, x, y, color) {
+      tip.style.left = `${x}px`;
+      tip.style.top = `${y}px`;
+      tip.style.color = color;
+      tip.textContent = text;
+      tip.style.display = 'block';
+    }
+
+    function drawWaveforms() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const baseClockY = 100;
+      const baseQY = 200;
+
+      ctx.strokeStyle = "#ccc";
+      ctx.beginPath();
+      ctx.moveTo(0, baseClockY);
+      ctx.lineTo(canvas.width, baseClockY);
+      ctx.moveTo(0, baseQY);
+      ctx.lineTo(canvas.width, baseQY);
+      ctx.stroke();
+
+      ctx.fillStyle = "#000";
+      ctx.fillText("Clock", 10, baseClockY - 10);
+      ctx.fillText("Q", 10, baseQY - 10);
+
+      const spacing = 20;
+      let x = 50;
+
+      ctx.strokeStyle = "#2196f3";
+      ctx.beginPath();
+      ctx.moveTo(x, baseClockY + (clockPoints[0] ? -20 : 20));
+      for (let i = 0; i < clockPoints.length; i++) {
+        ctx.lineTo(x, baseClockY + (clockPoints[i] ? -20 : 20));
+        x += spacing;
+        ctx.lineTo(x, baseClockY + (clockPoints[i] ? -20 : 20));
+        if (i > 0 && clockPoints[i] !== clockPoints[i - 1]) {
+          showTooltip(clockTip, `${clockPoints[i]}`, x - spacing / 2, canvas.offsetTop + baseClockY - 35, "#2196f3");
+        }
+      }
+      ctx.stroke();
+
+      ctx.strokeStyle = "#f44336";
+      ctx.beginPath();
+      x = 50;
+      ctx.moveTo(x, baseQY + (qPoints[0] ? -20 : 20));
+      for (let i = 0; i < qPoints.length; i++) {
+        ctx.lineTo(x, baseQY + (qPoints[i] ? -20 : 20));
+        x += spacing;
+        ctx.lineTo(x, baseQY + (qPoints[i] ? -20 : 20));
+        if (i > 0 && qPoints[i] !== qPoints[i - 1]) {
+          showTooltip(qTip, `${qPoints[i]}`, x - spacing / 2, canvas.offsetTop + baseQY - 35, "#f44336");
+        }
+      }
+      ctx.stroke();
+    }
+
+    function updateFrequencyDisplay() {
+      const freqClock = (clockEdges / 2).toFixed(1);
+      const freqQ = (qEdges / 2).toFixed(1);
+      clockFreqEl.textContent = freqClock;
+      qFreqEl.textContent = freqQ;
+      clockEdges = 0;
+      qEdges = 0;
+    }
+
+    function step() {
+      if (!running) return;
+      updateLogic();
+      drawWaveforms();
+      setTimeout(step, interval);
+    }
+
+    setInterval(updateFrequencyDisplay, 1000); // Update frequency every second
+
+    pauseBtn.addEventListener("click", () => {
+      running = !running;
+      pauseBtn.textContent = running ? "Pause" : "Resume";
+      if (running) step();
+    });
+
+    freqSelect.addEventListener("change", () => {
+      interval = parseInt(freqSelect.value);
+    });
+
+    step();
+  </script>
+</body>
+</html>
+
